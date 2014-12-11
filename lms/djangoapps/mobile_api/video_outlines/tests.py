@@ -19,7 +19,8 @@ from xmodule.video_module import transcripts_utils
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.django import modulestore
 
-from mobile_api.tests import ROLE_CASES
+from mobile_api.tests import ROLE_CASES, MobileAPITestCase
+
 
 TEST_DATA_CONTENTSTORE = copy.deepcopy(settings.CONTENTSTORE)
 TEST_DATA_CONTENTSTORE['DOC_STORE_CONFIG']['db'] = 'test_xcontent_%s' % uuid4().hex
@@ -27,14 +28,12 @@ TEST_DATA_CONTENTSTORE['DOC_STORE_CONFIG']['db'] = 'test_xcontent_%s' % uuid4().
 
 @ddt.ddt
 @override_settings(MODULESTORE=TEST_DATA_MOCK_MODULESTORE, CONTENTSTORE=TEST_DATA_CONTENTSTORE)
-class TestVideoOutline(ModuleStoreTestCase, APITestCase):
+class TestVideoOutline(MobileAPITestCase):
     """
     Tests for /api/mobile/v0.5/video_outlines/
     """
     def setUp(self):
         super(TestVideoOutline, self).setUp()
-        self.user = UserFactory.create()
-        self.course = CourseFactory.create(mobile_available=True)
         self.section = ItemFactory.create(
             parent_location=self.course.location,
             category="chapter",
@@ -104,13 +103,14 @@ class TestVideoOutline(ModuleStoreTestCase, APITestCase):
                     'bitrate': 250
                 }
             ]})
-
-        self.client.login(username=self.user.username, password='test')
+        self.login()
+        self.enroll(self.course)
 
     @ddt.data(*ROLE_CASES)
     @ddt.unpack
     def test_non_mobile_access(self, role, should_succeed):
         nonmobile = CourseFactory.create(mobile_available=False)
+        self.enroll(nonmobile)
 
         if role:
             role(nonmobile.id).add_users(self.user)
@@ -120,7 +120,7 @@ class TestVideoOutline(ModuleStoreTestCase, APITestCase):
         if should_succeed:
             self.assertEqual(response.status_code, 200)
         else:
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 404)
 
     def _get_video_summary_list(self):
         """

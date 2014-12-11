@@ -8,11 +8,8 @@ from courseware.module_render import get_module_for_descriptor
 from django.shortcuts import redirect
 from django.utils import dateparse
 
-from rest_framework import generics, permissions, views
-from rest_framework.authentication import OAuth2Authentication, SessionAuthentication
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
-
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics, views
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from courseware.views import get_current_child, save_positions_recursively_up
@@ -22,25 +19,16 @@ from opaque_keys import InvalidKeyError
 
 from student.models import CourseEnrollment, User
 
-from mobile_api.utils import mobile_available_when_enrolled
-
 from xblock.fields import Scope
 from xblock.runtime import KeyValueStore
 from xmodule.modulestore.django import modulestore
 
-
 from .serializers import CourseEnrollmentSerializer, UserSerializer
 from mobile_api import errors
+from mobile_api.utils import mobile_access_when_enrolled, mobile_view, MobileView
 
 
-class IsUser(permissions.BasePermission):
-    """
-    Permission that checks to see if the request user matches the User models
-    """
-    def has_object_permission(self, request, view, obj):
-        return request.user == obj
-
-
+@MobileView(is_user=True)
 class UserDetail(generics.RetrieveAPIView):
     """
     **Use Case**
@@ -70,8 +58,6 @@ class UserDetail(generics.RetrieveAPIView):
         * course_enrollments: The URI to list the courses the currently logged
           in user is enrolled in.
     """
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
-    permission_classes = (permissions.IsAuthenticated, IsUser)
     queryset = (
         User.objects.all()
         .select_related('profile', 'course_enrollments')
@@ -80,8 +66,7 @@ class UserDetail(generics.RetrieveAPIView):
     lookup_field = 'username'
 
 
-@authentication_classes((OAuth2Authentication, SessionAuthentication))
-@permission_classes((IsAuthenticated,))
+@MobileView()
 class UserCourseStatus(views.APIView):
     """
     Endpoints for getting and setting meta data
@@ -241,6 +226,7 @@ class UserCourseStatus(views.APIView):
         return self._process_arguments(request, username, course_id, handle_course)
 
 
+@MobileView(is_user=True)
 class UserCourseEnrollmentsList(generics.ListAPIView):
     """
     **Use Case**
@@ -274,38 +260,23 @@ class UserCourseEnrollmentsList(generics.ListAPIView):
           * start: The data and time the course starts.
           * course_image: The path to the course image.
     """
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
-    permission_classes = (permissions.IsAuthenticated, IsUser)
     queryset = CourseEnrollment.objects.all()
     serializer_class = CourseEnrollmentSerializer
     lookup_field = 'username'
 
     def get_queryset(self):
-        qset = self.queryset.filter(
-            user__username=self.kwargs['username'], is_active=True
-        ).order_by('created')
-        return mobile_course_enrollments(qset, self.request.user)
+        return filter(
+            lambda(enrollment): mobile_access_when_enrolled(enrollment.course, self.request.user),
+            self.queryset.filter(
+                user__username=self.kwargs['username'], is_active=True
+            ).order_by('created')
+        )
 
 
 @api_view(["GET"])
-@authentication_classes((OAuth2Authentication, SessionAuthentication))
-@permission_classes((IsAuthenticated,))
+@mobile_view()
 def my_user_info(request):
     """
     Redirect to the currently-logged-in user's info page
     """
     return redirect("user-detail", username=request.user.username)
-
-
-def mobile_course_enrollments(enrollments, user):
-    """
-    Return enrollments only if courses are mobile_available (or if the user has
-    privileged (beta, staff, instructor) access)
-
-    :param enrollments is a list of CourseEnrollments.
-    """
-    for enr in enrollments:
-        course = enr.course
-
-        if mobile_available_when_enrolled(course, user):
-            yield enr
