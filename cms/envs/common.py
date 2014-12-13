@@ -115,7 +115,11 @@ FEATURES = {
 
     # Turn off Video Upload Pipeline through Studio, by default
     'ENABLE_VIDEO_UPLOAD_PIPELINE': False,
+
+    # Toggle course entrance exams feature
+    'ENTRANCE_EXAMS': False,
 }
+
 ENABLE_JASMINE = False
 
 
@@ -715,7 +719,10 @@ OPTIONAL_APPS = (
     'openassessment.xblock',
 
     # edxval
-    'edxval'
+    'edxval',
+
+    # milestones
+    'milestones',
 )
 
 

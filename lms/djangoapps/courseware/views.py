@@ -67,6 +67,10 @@ import survey.utils
 import survey.views
 
 from util.views import ensure_valid_course_key
+
+if settings.FEATURES.get('MILESTONES_APP', False):
+    from milestones import api as milestones_api
+
 log = logging.getLogger("edx.courseware")
 
 template_imports = {'urllib': urllib}
@@ -423,6 +427,16 @@ def _index_bulk_op(request, course_key, chapter, section, position):
                 log.debug('staff masq as student: no chapter %s' % chapter)
                 return redirect(reverse('courseware', args=[course.id.to_deprecated_string()]))
             raise Http404
+
+        # Check to see if there are fulfillable milestones for this chapter
+        chapter_milestones = milestones_api.get_course_content_milestones(
+            unicode(course.id),
+            unicode(chapter_descriptor.location),
+            relationship='fulfills'
+        )
+        for milestone in chapter_milestones:
+            print milestone
+
 
         if section is not None:
             section_descriptor = chapter_descriptor.get_child_by(lambda m: m.location.name == section)

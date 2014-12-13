@@ -11,13 +11,27 @@ import json
 from collections import OrderedDict
 from functools import partial
 from static_replace import replace_static_urls
-from xmodule_modifiers import wrap_xblock, request_token
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_http_methods
+
+from cms.lib.xblock.runtime import handler_url, local_resource_url
+from contentstore.utils import find_release_date_source, find_staff_lock_source, is_currently_visible_to_students, \
+    ancestor_has_staff_lock
+from contentstore.views.helpers import is_unit, xblock_studio_url, xblock_primary_child_category, \
+    xblock_type_display_name, get_parent_xblock
+from contentstore.views.preview import get_preview_fragment
+from edxmako.shortcuts import render_to_string
+from models.settings.course_grading import CourseGradingModel
+from opaque_keys.edx.keys import UsageKey, CourseKey
+from student.auth import has_course_author_access
+from util.date_utils import get_default_time_display
+from util.json_request import expect_json, JsonResponse
 
 from xblock.fields import Scope
 from xblock.fragment import Fragment
@@ -30,23 +44,8 @@ from xmodule.modulestore.exceptions import ItemNotFoundError, InvalidLocationErr
 from xmodule.modulestore.inheritance import own_metadata
 from xmodule.modulestore.draft_and_published import DIRECT_ONLY_CATEGORIES
 from xmodule.x_module import PREVIEW_VIEWS, STUDIO_VIEW, STUDENT_VIEW
-
+from xmodule_modifiers import wrap_xblock, request_token
 from xmodule.course_module import DEFAULT_START_DATE
-from django.contrib.auth.models import User
-from util.date_utils import get_default_time_display
-
-from util.json_request import expect_json, JsonResponse
-
-from student.auth import has_course_author_access
-from contentstore.utils import find_release_date_source, find_staff_lock_source, is_currently_visible_to_students, \
-    ancestor_has_staff_lock
-from contentstore.views.helpers import is_unit, xblock_studio_url, xblock_primary_child_category, \
-    xblock_type_display_name, get_parent_xblock
-from contentstore.views.preview import get_preview_fragment
-from edxmako.shortcuts import render_to_string
-from models.settings.course_grading import CourseGradingModel
-from cms.lib.xblock.runtime import handler_url, local_resource_url
-from opaque_keys.edx.keys import UsageKey, CourseKey
 
 __all__ = ['orphan_handler', 'xblock_handler', 'xblock_view_handler', 'xblock_outline_handler']
 
@@ -449,8 +448,18 @@ def _save_xblock(user, xblock, data=None, children_strings=None, metadata=None, 
 
 @login_required
 @expect_json
+def create_item(request):
+    """
+    Exposes internal helper method without breaking existing bindings/dependencies
+    """
+    return _create_item(request)
+
+
+@login_required
+@expect_json
 def _create_item(request):
     """View for create items."""
+    print '_CREATE_ITEM'
     usage_key = usage_key_with_run(request.json['parent_locator'])
     category = request.json['category']
 
@@ -461,6 +470,7 @@ def _create_item(request):
 
     store = modulestore()
     with store.bulk_operations(usage_key.course_key):
+        course = store.get_course(usage_key.course_key)
         parent = store.get_item(usage_key)
         dest_usage_key = usage_key.replace(category=category, name=uuid4().hex)
 
@@ -479,6 +489,17 @@ def _create_item(request):
         if display_name is not None:
             metadata['display_name'] = display_name
 
+        child_position = None
+
+        # Entrance Exams: Chapter module positioning
+        if settings.FEATURES.get('ENTRANCE_EXAMS', False):
+            if hasattr(course, 'entrance_exam_enabled') and course.entrance_exam_enabled:
+                is_entrance_exam = request.json.get('is_entrance_exam')
+                if category == 'chapter' and is_entrance_exam is not None:
+                    metadata['is_entrance_exam'] = is_entrance_exam
+                    if is_entrance_exam:
+                        child_position = 0
+
         # TODO need to fix components that are sending definition_data as strings, instead of as dicts
         # For now, migrate them into dicts here.
         if isinstance(data, basestring):
@@ -492,7 +513,29 @@ def _create_item(request):
             definition_data=data,
             metadata=metadata,
             runtime=parent.runtime,
+            position=child_position
         )
+        # Entrance Exams: Grader assignment
+        if settings.FEATURES.get('ENTRANCE_EXAMS', False):
+            if hasattr(course, 'entrance_exam_enabled') and course.entrance_exam_enabled:
+                if category == 'sequential' and request.json.get('parent_locator') == course.entrance_exam_id:
+                    grader = {
+                        "type": "Entrance Exam",
+                        "min_count": 0,
+                        "drop_count": 0,
+                        "short_label": "Entrance",
+                        "weight": 0
+                    }
+                    grading_model = CourseGradingModel.update_grader_from_json(
+                        course.id,
+                        grader,
+                        request.user
+                    )
+                    CourseGradingModel.update_section_grader_type(
+                        created_block,
+                        grading_model['type'],
+                        request.user
+                    )
 
         # VS[compat] cdodge: This is a hack because static_tabs also have references from the course module, so
         # if we add one then we need to also add it to the policy information (i.e. metadata)
@@ -563,6 +606,15 @@ def _duplicate_item(parent_usage_key, duplicate_source_usage_key, user, display_
             store.update_item(parent, user.id)
 
         return dest_module.location
+
+
+@login_required
+@expect_json
+def delete_item(request, usage_key):
+    """
+    Exposes internal helper method without breaking existing bindings/dependencies
+    """
+    _delete_item(usage_key, request.user)
 
 
 def _delete_item(usage_key, user):
