@@ -1,16 +1,18 @@
 define([
-    'js/collections/group_configuration', 'js/views/pages/group_configurations'
-], function(GroupConfigurationCollection, GroupConfigurationsPage) {
+    'js/collections/group_configuration', 'js/models/group_configuration', 'js/views/pages/group_configurations'
+], function(GroupConfigurationCollection, GroupConfigurationModel, GroupConfigurationsPage) {
     'use strict';
-    return function (configurations, groupConfigurationUrl, courseOutlineUrl) {
-        var collection = new GroupConfigurationCollection(configurations, { parse: true }),
-            configurationsPage;
+    return function (experimentConfigurations, cohortConfiguration, groupConfigurationUrl, courseOutlineUrl) {
+        var groupConfigurationCollection = new GroupConfigurationCollection(experimentConfigurations, {parse: true}),
+            cohortGroupConfiguration = new GroupConfigurationModel(cohortConfiguration, {parse: true});
 
-        collection.url = groupConfigurationUrl;
-        collection.outlineUrl = courseOutlineUrl;
-        configurationsPage = new GroupConfigurationsPage({
+        groupConfigurationCollection.url = groupConfigurationUrl;
+        cohortGroupConfiguration.urlRoot = groupConfigurationUrl;
+        groupConfigurationCollection.outlineUrl = courseOutlineUrl;
+        new GroupConfigurationsPage({
             el: $('#content'),
-            collection: collection
+            collection: groupConfigurationCollection,
+            cohortGroupConfiguration: cohortGroupConfiguration
         }).render();
     };
 });

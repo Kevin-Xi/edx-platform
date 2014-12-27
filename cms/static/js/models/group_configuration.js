@@ -9,9 +9,9 @@ function(Backbone, _, str, gettext, GroupModel, GroupCollection) {
         defaults: function() {
             return {
                 name: '',
-                scheme: 'random',
                 description: '',
                 version: 2,
+                scheme: 'random',
                 groups: new GroupCollection([
                     {
                         name: gettext('Group A'),

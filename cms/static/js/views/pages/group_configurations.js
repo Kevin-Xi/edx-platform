@@ -1,20 +1,24 @@
 define([
     'jquery', 'underscore', 'gettext', 'js/views/pages/base_page',
-    'js/views/group_configurations_list'
+    'js/views/group_configurations_list', 'js/views/group_list'
 ],
-function ($, _, gettext, BasePage, GroupConfigurationsList) {
+function ($, _, gettext, BasePage, GroupConfigurationsList, GroupList) {
     'use strict';
     var GroupConfigurationsPage = BasePage.extend({
-        initialize: function() {
+        initialize: function(options) {
             BasePage.prototype.initialize.call(this);
-            this.listView = new GroupConfigurationsList({
+            this.contentExperimentsListView = new GroupConfigurationsList({
                 collection: this.collection
+            });
+            this.cohortGroupsListView = new GroupList({
+                collection: options.cohortGroupConfiguration.get('groups')
             });
         },
 
         renderPage: function() {
             var hash = this.getLocationHash();
-            this.$('.content-primary').append(this.listView.render().el);
+            this.$('.experiment-groups').append(this.contentExperimentsListView.render().el);
+            this.$('.cohort-groups').append(this.cohortGroupsListView.render().el);
             this.addButtonActions();
             this.addWindowActions();
             if (hash) {
@@ -25,8 +29,11 @@ function ($, _, gettext, BasePage, GroupConfigurationsList) {
         },
 
         addButtonActions: function () {
-            this.$('.nav-actions .new-button').click(function (event) {
-                this.listView.addOne(event);
+            this.$('.experiment-groups .new-button').click(function (event) {
+                this.contentExperimentsListView.addOne(event);
+            }.bind(this));
+            this.$('.cohort-groups .new-button').click(function (event) {
+                this.cohortGroupsListView.addOne(event);
             }.bind(this));
         },
 
@@ -39,7 +46,7 @@ function ($, _, gettext, BasePage, GroupConfigurationsList) {
                 return configuration.isDirty();
             });
 
-            if(dirty) {
+            if (dirty) {
                 return gettext('You have unsaved changes. Do you really want to leave this page?');
             }
         },
