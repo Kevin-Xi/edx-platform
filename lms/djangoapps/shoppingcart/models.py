@@ -299,15 +299,12 @@ class Order(models.Model):
         for item in order_items:
             discount_price = '0.00'
             price = item.unit_cost
-            course_key = getattr(item, 'course_id', None)
-            if course_key is not None:
-                course = get_course_by_id(course_key, depth=0)
             if item.list_price is not None:
                 discount_price = item.list_price - item.unit_cost
                 price = item.list_price
             total = item.qty*item.unit_cost
             items_data.append({
-                'course_name': course.display_name,
+                'item_name': item.pdf_receipt_display_name,
                 'quantity': item.qty,
                 'list_price': price,
                 'discount':discount_price,
@@ -707,6 +704,18 @@ class OrderItem(TimeStampedModel):
         Currently, only used for emails.
         """
         return ''
+
+    @property
+    def pdf_receipt_display_name(self):
+	"""
+        How to display this item on a PDF printed receipt file. This can be overridden by the subclasses of OrderItem
+	"""
+        course_key = getattr(self, 'course_id', None)
+	if course_key:
+            course = get_course_by_id(course_key, depth=0)
+	    return course.display_name
+	else:
+	    raise Exception("Not Implemented. OrderItems that are not Course specific should have a overridden pdf_receipt_display_name property")
 
     def analytics_data(self):
         """Simple function used to construct analytics data for the OrderItem.

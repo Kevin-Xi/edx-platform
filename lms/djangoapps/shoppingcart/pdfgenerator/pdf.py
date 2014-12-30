@@ -167,7 +167,7 @@ class SimpleInvoice(UnicodeProperty):
             for i in range(1):
                 data.append([
                     '',
-                    Paragraph(row['course_name'], style),
+                    Paragraph(row['item_name'], style),
                     row['quantity'],
                     '{currency}{price}'.format(price=row['list_price'], currency=self.currency),
                     '{currency}{price}'.format(price=row['discount'], currency=self.currency),
