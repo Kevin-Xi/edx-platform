@@ -319,6 +319,8 @@ class Order(models.Model):
             'date': self.purchase_time.strftime("%B %d, %Y"),
             'is_invoice': False,
             'total_cost': self.total_cost,
+            'payment_received': self.total_cost,
+            'balance': '0.00',
             'wl_logo': wl_partner_logo_path,
             'edx_logo': edx_logo_path
         }
