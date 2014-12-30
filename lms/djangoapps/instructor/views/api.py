@@ -1197,7 +1197,7 @@ def generate_registration_codes(request, course_id):
         course_price,
         int(quantity),
         float(sale_price),
-	context
+        context
     )
     from_address = microsite.get_value('email_from_address', settings.DEFAULT_FROM_EMAIL)
     context = {
