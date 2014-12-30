@@ -798,27 +798,29 @@ def _show_receipt_html(request, order):
 
     from pdfgenerator.pdf import SimpleInvoice
 
-    disclaimer_text = ""
-    edx_as_a_service_provider_text = ""
-    edx_billing_address_text = """141 Portland St.
-        9th Floor
-        Cambridge,
-        MA 02139"""
-    edx_tax_id = '46-0807740'
-    tax_label = 'EdX Tax ID'
-    terms_conditions_text = """Enrollments:
-            Enrollments must be completed within 7 full days from the course start date.
-            Payment Terms:
-            Payment is due immediately. Preferred method of payment is wire transfer. Full instructions and remittance details will be included on your official invoice. Please note that our terms are net zero. For questions regarding payment instructions or extensions, please contact onlinex-registration@mit.edu and include the words "payment question" in your subject line.
-            Cancellations:
-            Cancellation requests must be submitted to onlinex-registration@mit.edu 14 days prior to the course start date to be eligible for a refund. If you submit a cancellation request within 14 days prior to the course start date, you will not be eligible for a refund. Please see our Terms of Service page for full details.
-            Substitutions:
-            The MIT Professional Education Online X Programs office must receive substitution requests before the course start date in order for the request to be considered. Please email onlinex-registration@mit.edu to request a substitution.
-            Please see our Terms of Service page for our detailed policies, including terms and conditions of use."""
+    disclaimer_text = microsite.get_value("PDF_RECEIPT_DISCLAIMER_TEXT", settings.PDF_RECEIPT_DISCLAIMER_TEXT)
+    footer_text = microsite.get_value("PDF_RECEIPT_FOOTER_TEXT", settings.PDF_RECEIPT_FOOTER_TEXT)
+    billing_address_text = microsite.get_value("PDF_RECEIPT_BILLING_ADDRESS", settings.PDF_RECEIPT_BILLING_ADDRESS)
+    tax_id = microsite.get_value("PDF_RECEIPT_TAX_ID", settings.PDF_RECEIPT_TAX_ID)
+    tax_label = microsite.get_value("PDF_RECEIPT_TAX_ID_LABEL", settings.PDF_RECEIPT_TAX_ID_LABEL)
+    terms_conditions_text = microsite.get_value("PDF_RECEIPT_TERMS_AND_CONDITIONS", settings.PDF_RECEIPT_TERMS_AND_CONDITIONS)
+    
     wl_partner_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/wl_logo.gif'
     edx_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/logo-edX-77x36.png'
 
-    pdf_file = order.generate_pdf_receipt(order_items, wl_partner_logo_path, edx_logo_path)
+    context = {
+            'wl_logo': wl_partner_logo_path,
+            'edx_logo': edx_logo_path,
+            'disclaimer_text': disclaimer_text,
+            'billing_address_text': billing_address_text,
+            'tax_id': tax_id,
+            'tax_label': tax_label,
+            'terms_and_conditions': terms_conditions_text,
+	    'footer_text': footer_text,
+    }
+
+    pdf_file = order.generate_pdf_receipt(order_items, context)
+    
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=receipt.pdf'
     response.write(pdf_file.getvalue())

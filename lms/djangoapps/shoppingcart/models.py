@@ -292,12 +292,12 @@ class Order(models.Model):
         self.save()
         return old_to_new_id_map
 
-    def generate_pdf_receipt(self, order_items, wl_partner_logo_path, edx_logo_path):
+    def generate_pdf_receipt(self, order_items, context):
         from pdfgenerator.pdf import SimpleInvoice
         items_data = []
         buffer = BytesIO()
         for item in order_items:
-            discount_price = '0.00'
+            discount_price = 0.0
             price = item.unit_cost
             if item.list_price is not None:
                 discount_price = item.list_price - item.unit_cost
@@ -307,10 +307,10 @@ class Order(models.Model):
                 'item_name': item.pdf_receipt_display_name,
                 'quantity': item.qty,
                 'list_price': price,
-                'discount':discount_price,
+                'discount': discount_price,
                 'total': total
             })
-        context = {
+        context.update({
             'items_data': items_data,
             'id': str(self.id),
             'date': self.purchase_time.strftime("%B %d, %Y"),
@@ -318,9 +318,7 @@ class Order(models.Model):
             'total_cost': self.total_cost,
             'payment_received': self.total_cost,
             'balance': '0.00',
-            'wl_logo': wl_partner_logo_path,
-            'edx_logo': edx_logo_path
-        }
+        })
         pdf = SimpleInvoice(context)
         pdf.gen(buffer)
         return buffer

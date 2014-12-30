@@ -62,7 +62,12 @@ class SimpleInvoice(UnicodeProperty):
         self.payment_received = context['payment_received'] if 'payment_received' in context else ''
         self.balance = context['balance'] if 'balance' in context else ''
         self.currency = settings.PAID_COURSE_REGISTRATION_CURRENCY[1]
-
+	self.tax_id = context['tax_id']
+	self.disclaimer_text = context['disclaimer_text']
+	self.billing_address_text = context['billing_address_text']
+	self.tax_label = context['tax_label']
+	self.terms_and_conditions = context['terms_and_conditions']
+	self.footer_text = context['footer_text']
 
     def prepare_invoice_draw(self):
         self.MARGIN = 15 * mm
@@ -248,7 +253,7 @@ class SimpleInvoice(UnicodeProperty):
             ['Total', '{currency}{price}'.format(currency=self.currency, price=self.total_cost)],
             ['Payment Received', '{currency}{price}'.format(currency=self.currency, price=self.payment_received)],
             ['Balance', '{currency}{price}'.format(currency=self.currency, price=self.balance)],
-            ['', 'EdX Tax ID:  46-0807740']
+            ['', '{tax_label}:  {tax_id}'.format(tax_label=self.tax_label, tax_id=self.tax_id)]
         ]
 
         heights = 8*mm
@@ -274,24 +279,16 @@ class SimpleInvoice(UnicodeProperty):
 
 
     def draw_footer(self, y_pos):
-        service_provider_text = """EdX offers online courses that include opportunities for professor-to-student and student-to-student interactivity, individual assessment of a student's work and, for students who demonstrate their mastery of subjects, a certificate of achievement or other acknowledgment."""
-
-        disclaimer_text = """THE SITE AND ANY INFORMATION, CONTENT OR SERVICES MADE AVAILABLE ON OR THROUGH THE SITE ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTY OF ANY KIND (EXPRESS, IMPLIED OR OTHERWISE), INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT, EXCEPT INSOFAR AS ANY SUCH IMPLIED WARRANTIES MAY NOT BE DISCLAIMED UNDER APPLICABLE LAW."""
-
-        billing_address_text = """141 Portland St.
-        9th Floor
-        Cambridge,
-        MA 02139"""
 
         style = getSampleStyleSheet()['Normal']
         style.fontSize = 8
 
-        service_provider_para = Paragraph(service_provider_text.replace("\n", "<br/>"), style)
-        disclaimer_para = Paragraph(disclaimer_text.replace("\n", "<br/>"), style)
-        billing_address_para = Paragraph(billing_address_text.replace("\n", "<br/>"), style)
+        footer_para = Paragraph(self.footer_text.replace("\n", "<br/>"), style)
+        disclaimer_para = Paragraph(self.disclaimer_text.replace("\n", "<br/>"), style)
+        billing_address_para = Paragraph(self.billing_address_text.replace("\n", "<br/>"), style)
 
         data= [
-            [service_provider_para],
+            [footer_para],
             ['Disclaimer'],
             [disclaimer_para],
             ['Billing Address'],
@@ -318,16 +315,7 @@ class SimpleInvoice(UnicodeProperty):
         ]
 
         if (self.is_invoice):
-            terms_conditions_text = """Enrollments:
-            Enrollments must be completed within 7 full days from the course start date.
-            Payment Terms:
-            Payment is due immediately. Preferred method of payment is wire transfer. Full instructions and remittance details will be included on your official invoice. Please note that our terms are net zero. For questions regarding payment instructions or extensions, please contact onlinex-registration@mit.edu and include the words "payment question" in your subject line.
-            Cancellations:
-            Cancellation requests must be submitted to onlinex-registration@mit.edu 14 days prior to the course start date to be eligible for a refund. If you submit a cancellation request within 14 days prior to the course start date, you will not be eligible for a refund. Please see our Terms of Service page for full details.
-            Substitutions:
-            The MIT Professional Education Online X Programs office must receive substitution requests before the course start date in order for the request to be considered. Please email onlinex-registration@mit.edu to request a substitution.
-            Please see our Terms of Service page for our detailed policies, including terms and conditions of use."""
-            terms_conditions_para = Paragraph(terms_conditions_text.replace("\n", "<br/>"), style)
+            terms_conditions_para = Paragraph(self.terms_and_conditions.replace("\n", "<br/>"), style)
             data.append(['TERMS AND CONDITIONS'])
             data.append([terms_conditions_para])
             footer_style.append(('LEFTPADDING', (0,6), (0,6), 5*mm))
