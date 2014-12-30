@@ -472,9 +472,28 @@ class Order(models.Model):
             #
             csv_file, courses_info = self.generate_registration_codes_csv(orderitems, site_name)
 
+        disclaimer_text = microsite.get_value("PDF_RECEIPT_DISCLAIMER_TEXT", settings.PDF_RECEIPT_DISCLAIMER_TEXT)
+        footer_text = microsite.get_value("PDF_RECEIPT_FOOTER_TEXT", settings.PDF_RECEIPT_FOOTER_TEXT)
+        billing_address_text = microsite.get_value("PDF_RECEIPT_BILLING_ADDRESS", settings.PDF_RECEIPT_BILLING_ADDRESS)
+        tax_id = microsite.get_value("PDF_RECEIPT_TAX_ID", settings.PDF_RECEIPT_TAX_ID)
+        tax_label = microsite.get_value("PDF_RECEIPT_TAX_ID_LABEL", settings.PDF_RECEIPT_TAX_ID_LABEL)
+        terms_conditions_text = microsite.get_value("PDF_RECEIPT_TERMS_AND_CONDITIONS", settings.PDF_RECEIPT_TERMS_AND_CONDITIONS)
+
         wl_partner_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/wl_logo.gif'
         edx_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/logo-edX-77x36.png'
-        pdf_file = self.generate_pdf_receipt(orderitems, wl_partner_logo_path, edx_logo_path)
+
+        context = {
+            'wl_logo': wl_partner_logo_path,
+            'edx_logo': edx_logo_path,
+            'disclaimer_text': disclaimer_text,
+            'billing_address_text': billing_address_text,
+            'tax_id': tax_id,
+            'tax_label': tax_label,
+            'terms_and_conditions': terms_conditions_text,
+            'footer_text': footer_text,
+        }
+
+        pdf_file = self.generate_pdf_receipt(orderitems, context)
 
         self.send_confirmation_emails(orderitems, self.order_type == OrderTypes.BUSINESS, csv_file, pdf_file, site_name, courses_info)
         self._emit_order_event('Completed Order', orderitems)
@@ -769,13 +788,13 @@ class Invoice(models.Model):
     customer_reference_number = models.CharField(max_length=63, null=True)
     is_valid = models.BooleanField(default=True)
 
-    def generate_pdf_invoice(self, course, course_price, quantity, sale_price, wl_partner_logo_path, edx_logo_path):
+    def generate_pdf_invoice(self, course, course_price, quantity, sale_price, context):
         from shoppingcart.pdfgenerator.pdf import SimpleInvoice
         discount_per_item = float(course_price) - sale_price/quantity
         list_price = course_price - discount_per_item
         item_data = [
             {
-                'course_name': course.display_name,
+                'item_name': course.display_name,
                 'quantity': quantity,
                 'list_price': list_price,
                 'discount': discount_per_item,
@@ -783,17 +802,15 @@ class Invoice(models.Model):
             }
         ]
         buffer = BytesIO()
-        context = {
+        context.update({
             'items_data': item_data,
             'id': str(self.id),
             'date': time.strftime("%B %d, %Y"),
             'is_invoice': True,
             'total_cost': self.total_amount,
-            'wl_logo': wl_partner_logo_path,
-            'edx_logo': edx_logo_path,
             'payment_received': '0.00',
             'balance': self.total_amount,
-        }
+        })
         pdf = SimpleInvoice(context)
         pdf.gen(buffer)
         return buffer

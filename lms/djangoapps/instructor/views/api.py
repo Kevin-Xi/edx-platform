@@ -1171,15 +1171,33 @@ def generate_registration_codes(request, course_id):
         dashboard=reverse('dashboard')
     )
 
+    disclaimer_text = microsite.get_value("PDF_RECEIPT_DISCLAIMER_TEXT", settings.PDF_RECEIPT_DISCLAIMER_TEXT)
+    footer_text = microsite.get_value("PDF_RECEIPT_FOOTER_TEXT", settings.PDF_RECEIPT_FOOTER_TEXT)
+    billing_address_text = microsite.get_value("PDF_RECEIPT_BILLING_ADDRESS", settings.PDF_RECEIPT_BILLING_ADDRESS)
+    tax_id = microsite.get_value("PDF_RECEIPT_TAX_ID", settings.PDF_RECEIPT_TAX_ID)
+    tax_label = microsite.get_value("PDF_RECEIPT_TAX_ID_LABEL", settings.PDF_RECEIPT_TAX_ID_LABEL)
+    terms_conditions_text = microsite.get_value("PDF_RECEIPT_TERMS_AND_CONDITIONS", settings.PDF_RECEIPT_TERMS_AND_CONDITIONS)
+
     wl_partner_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/wl_logo.gif'
     edx_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/logo-edX-77x36.png'
+
+    context = {
+            'wl_logo': wl_partner_logo_path,
+            'edx_logo': edx_logo_path,
+            'disclaimer_text': disclaimer_text,
+            'billing_address_text': billing_address_text,
+            'tax_id': tax_id,
+            'tax_label': tax_label,
+            'terms_and_conditions': terms_conditions_text,
+            'footer_text': footer_text,
+    }
+
     pdf_file = sale_invoice.generate_pdf_invoice(
         course,
         course_price,
         int(quantity),
         float(sale_price),
-        wl_partner_logo_path,
-        edx_logo_path
+	context
     )
     from_address = microsite.get_value('email_from_address', settings.DEFAULT_FROM_EMAIL)
     context = {
