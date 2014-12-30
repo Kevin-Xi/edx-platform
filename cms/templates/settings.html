@@ -306,6 +306,15 @@ CMS.URL.UPLOAD_ASSET = '${upload_asset_url}';
                   <input type="text" class="short time" id="course-effort" placeholder="HH:MM" />
                   <span class="tip tip-inline">${_("Time spent on all course work")}</span>
                 </li>
+                % if settings.FEATURES.get('ENTRANCE_EXAMS'):
+                <li>
+                  <label id="heading-entrance-exam">${_("Entrance Exam")}</label>
+                  <div>
+                      <input type="checkbox" id="entrance-exam-enabled" />
+                      <label for="entrance-exam-enabled">${_("Enables entrance exam requirement. Students must successfully complete exam before gaining access to the course.")}</label>
+                  </div>
+                </li>
+                % endif
               </ol>
             </section>
           % endif

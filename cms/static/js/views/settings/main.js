@@ -63,6 +63,11 @@ var DetailsView = ValidatingView.extend({
         var imageURL = this.model.get('course_image_asset_path');
         this.$el.find('#course-image-url').val(imageURL);
         this.$el.find('#course-image').attr('src', imageURL);
+        if(this.model.get('entrance_exam_enabled') == 'true'){
+            this.$el.find('#' + this.fieldToSelectorMap['entrance_exam_enabled']).attr('checked', this.model.get('entrance_exam_enabled'));
+        }else{
+            this.$el.find('#' + this.fieldToSelectorMap['entrance_exam_enabled']).removeAttr('checked');
+        }
 
         return this;
     },
@@ -75,7 +80,8 @@ var DetailsView = ValidatingView.extend({
         'short_description' : 'course-short-description',
         'intro_video' : 'course-introduction-video',
         'effort' : "course-effort",
-        'course_image_asset_path': 'course-image-url'
+        'course_image_asset_path': 'course-image-url',
+        'entrance_exam_enabled': 'entrance-exam-enabled'
     },
 
     updateTime : function(e) {
@@ -149,6 +155,9 @@ var DetailsView = ValidatingView.extend({
             }, 1000);
             break;
         case 'course-effort':
+            this.setField(event);
+            break;
+        case 'entrance-exam-enabled':
             this.setField(event);
             break;
         case 'course-short-description':

@@ -67,6 +67,7 @@ from course_action_state.models import CourseRerunState, CourseRerunUIStateManag
 from course_action_state.managers import CourseActionStateItemNotFoundError
 from microsite_configuration import microsite
 from xmodule.course_module import CourseFields
+from contentstore.views.entrance_exam import create_entrance_exam, delete_entrance_exam
 
 
 __all__ = ['course_info_handler', 'course_handler', 'course_info_update_handler',
@@ -776,7 +777,15 @@ def settings_handler(request, course_key_string):
                     # encoder serializes dates, old locations, and instances
                     encoder=CourseSettingsEncoder
                 )
-            else:  # post or put, doesn't matter.
+            else:
+                # post or put, doesn't matter.
+                # is entrance exam enabled or not for course.
+                entrance_exam_enabled = request.json.get('entrance_exam_enabled', '') == 'true'
+                if entrance_exam_enabled:
+                    create_entrance_exam(request, course_key)
+                else:
+                    delete_entrance_exam(request, course_key)
+
                 return JsonResponse(
                     CourseDetails.update_from_json(course_key, request.json, request.user),
                     encoder=CourseSettingsEncoder

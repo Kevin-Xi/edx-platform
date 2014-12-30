@@ -19,6 +19,7 @@ ABOUT_ATTRIBUTES = [
     'short_description',
     'overview',
     'effort',
+    'entrance_exam_enabled',
 ]
 
 
@@ -39,6 +40,7 @@ class CourseDetails(object):
         self.effort = None  # int hours/week
         self.course_image_name = ""
         self.course_image_asset_path = ""  # URL of the course image
+        self.entrance_exam_enabled = ""  # is entrance exam enabled
 
     @classmethod
     def _fetch_about_attribute(cls, course_key, attribute):

@@ -55,14 +55,12 @@ def entrance_exam(request, course_key_string):
         response_format = request.REQUEST.get('format', 'html')
         http_accept = request.META.get('http_accept')
         if response_format == 'json' or 'application/json' in http_accept:
-            # First clean out any old entrance exams
-            _delete_entrance_exam(request, course_key)
-            return _create_entrance_exam(request, course_key)
+            return create_entrance_exam(request, course_key)
         return HttpResponse(status=400)
 
     # Remove the entrance exam module for the specified course (returns 204 regardless of existence)
     elif request.method == 'DELETE':
-        return _delete_entrance_exam(request, course_key)
+        return delete_entrance_exam(request, course_key)
 
     # No other HTTP verbs/methods are supported at this time
     else:
@@ -78,6 +76,15 @@ def entrance_exam_create_helper(request, course_key_string):
     """
     course_key = CourseKey.from_string(course_key_string)
     return _create_entrance_exam(request, course_key)
+
+
+def create_entrance_exam(request, course_key):
+    """
+    api method to create an entrance exam.
+    First clean out any old entrance exams.
+    """
+    _delete_entrance_exam(request, course_key)
+    return _create_entrance_exam(request=request, course_key=course_key)
 
 
 def _create_entrance_exam(request, course_key):
@@ -154,6 +161,13 @@ def _get_entrance_exam(request, course_key):  # pylint: disable=W0613
         return HttpResponse(status=404)
 
     return HttpResponse(_serialize_entrance_exam(children[0]), status=200, mimetype='application/json')
+
+
+def delete_entrance_exam(request, course_key):
+    """
+    api method to delete an entrance exam
+    """
+    return _delete_entrance_exam(request=request, course_key=course_key)
 
 
 def _delete_entrance_exam(request, course_key):
