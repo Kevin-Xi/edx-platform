@@ -45,7 +45,7 @@ class NumberedCanvas(Canvas):
         Canvas.save(self)
 
     def draw_page_number(self, page_count):
-        self.setFont("DejaVu", 7)
+        self.setFontSize(7)
         self.drawRightString(200*mm, 12*mm,
             _("Page %(page_number)d of %(page_count)d") % {"page_number": self._pageNumber, "page_count": page_count})
 
@@ -62,12 +62,12 @@ class SimpleInvoice(UnicodeProperty):
         self.payment_received = context['payment_received'] if 'payment_received' in context else ''
         self.balance = context['balance'] if 'balance' in context else ''
         self.currency = settings.PAID_COURSE_REGISTRATION_CURRENCY[1]
-	self.tax_id = context['tax_id']
-	self.disclaimer_text = context['disclaimer_text']
-	self.billing_address_text = context['billing_address_text']
-	self.tax_label = context['tax_label']
-	self.terms_and_conditions = context['terms_and_conditions']
-	self.footer_text = context['footer_text']
+        self.tax_id = context['tax_id']
+        self.disclaimer_text = context['disclaimer_text']
+        self.billing_address_text = context['billing_address_text']
+        self.tax_label = context['tax_label']
+        self.terms_and_conditions = context['terms_and_conditions']
+        self.footer_text = context['footer_text']
 
     def prepare_invoice_draw(self):
         self.MARGIN = 15 * mm
@@ -75,15 +75,9 @@ class SimpleInvoice(UnicodeProperty):
         self.page_height = letter[1]
         self.min_clearance = 3 * mm
 
-        FONT_PATH = '/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf'
-        FONT_BOLD_PATH = '/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans-Bold.ttf'
-
-        pdfmetrics.registerFont(TTFont('DejaVu', FONT_PATH))
-        pdfmetrics.registerFont(TTFont('DejaVu-Bold', FONT_BOLD_PATH))
-
         self.pdf = NumberedCanvas(self.filename, pagesize=letter)
 
-        self.pdf.setFont('DejaVu', 15)
+        self.pdf.setFontSize(15)
         self.pdf.setStrokeColorRGB(0.5, 0.5, 0.5)
         self.pdf.setLineWidth(0.353 * mm)
 
@@ -124,12 +118,12 @@ class SimpleInvoice(UnicodeProperty):
         vertical_padding_from_border = 11 * mm
         img_y_pos = self.page_height - (self.MARGIN + vertical_padding_from_border + img_height)
 
-	if self.cobrand_logo_path:
-	    img = Image.open(self.cobrand_logo_path)
+        if self.cobrand_logo_path:
+            img = Image.open(self.cobrand_logo_path)
             img_width = float(img.size[0]) / (float(img.size[1])/img_height)
             self.pdf.drawImage(self.cobrand_logo_path, self.MARGIN + horizontal_padding_from_border, img_y_pos, img_width, img_height, mask='auto')
 
-	if self.logo_path:
+        if self.logo_path:
             img = Image.open(self.logo_path)
             img_width = float(img.size[0]) / (float(img.size[1])/img_height)
             self.pdf.drawImage(self.logo_path, self.page_width - (self.MARGIN + horizontal_padding_from_border + img_width), img_y_pos, img_width, img_height, mask='auto')
@@ -148,17 +142,17 @@ class SimpleInvoice(UnicodeProperty):
 
         # Draw Title "RECEIPT" OR "INVOICE"
         font_size = 21
-        self.pdf.setFont('DejaVu', font_size)
+        self.pdf.setFontSize(font_size)
         self.pdf.drawCentredString(self.page_width/2, y_pos - vertical_padding - font_size/2, title)
 
-        y_pos = y_pos - vertical_padding - font_size - self.min_clearance
+        y_pos = y_pos - vertical_padding - font_size/2 - self.min_clearance
 
         font_size = 10
-        self.pdf.setFont('DejaVu', font_size)
+        self.pdf.setFontSize(font_size)
 
         horizontal_padding_from_border = 9 * mm
 
-        y_pos = y_pos - font_size
+        y_pos = y_pos - font_size/2 - vertical_padding
         # Draw Order/Invoice No.
         self.pdf.drawString(self.MARGIN + horizontal_padding_from_border, y_pos, _(u'{id_label} # {id}'.format(id_label=id_label, id=self.id)))
 
