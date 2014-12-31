@@ -3,15 +3,15 @@
     <% if ( !upgrade ) { %>
       <h3 class="title center-col">
         <%= _.sprintf(
-            gettext( "You are enrolling in: <span class='course-title'> %(courseName)s </span>"),
-            { courseName: courseName }
+            gettext( "You are enrolling in: %(courseName)s"),
+            { courseName: '<span class="course-title">' + courseName + '</span>' }
           ) %>
       </h3>
     <% } else { %>
       <h3 class="title">
         <%= _.sprintf(
-            gettext( "You are upgrading your enrollment for: <span class='course-title'> %(courseName)s </span>"),
-            { courseName: courseName }
+            gettext( "You are upgrading your enrollment for: %(courseName)s"),
+            { courseName: '<span class="course-title">' + courseName + '</span>' }
           ) %>
       </h3>
       <div class="instruction">
