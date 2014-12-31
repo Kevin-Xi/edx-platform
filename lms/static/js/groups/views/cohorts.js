@@ -53,13 +53,17 @@ var edx = edx || {};
             }));
         },
 
-        onSync: function() {
+        onSync: function(model, response, options) {
             var selectedCohort = this.lastSelectedCohortId && this.model.get(this.lastSelectedCohortId),
                 hasCohorts = this.model.length > 0,
                 cohortNavElement = this.$('.cohort-management-nav'),
-                additionalCohortControlElement = this.$('.wrapper-cohort-supplemental');
+                additionalCohortControlElement = this.$('.wrapper-cohort-supplemental'),
+                isModelUpdate = options && options.patch && response.hasOwnProperty('user_partition_id');
             this.hideAddCohortForm();
-            if (hasCohorts) {
+            if (isModelUpdate) {
+                // Refresh the selector in case the model's name changed
+                this.renderSelector(selectedCohort);
+            } else if (hasCohorts) {
                 cohortNavElement.removeClass(hiddenClass);
                 additionalCohortControlElement.removeClass(hiddenClass);
                 this.renderSelector(selectedCohort);

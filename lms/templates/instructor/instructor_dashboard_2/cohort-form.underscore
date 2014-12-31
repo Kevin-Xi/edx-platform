@@ -26,30 +26,32 @@
 
             <%
             var foundSelected = false;
-            var cohortGroupId = cohort.get('group_id');
-            var hasSelectedCohort = cohortGroupId != null;
+            var selectedContentGroupId = cohort.get('group_id');
+            var hasSelectedContentGroup = selectedContentGroupId != null;
             %>
             <div class="form-field">
                 <div class="cohort-management-details-association-course field field-radio">
                     <label class="label">
                         <%- gettext('Is this cohort group associated with course-based content groups?') %>
                     </label>
-                        <label><input type="radio" class="radio-no" name="cohort-association-course" value="no"  <%- !hasSelectedCohort ? 'checked="checked"' : '' %>/> <%- gettext("No") %></label>
-                        <div class="input-group has-other-input-text">
-                            <label><input type="radio" class="radio-yes" name="cohort-association-course" value="yes" <%- hasSelectedCohort ? 'checked="checked"' : '' %> /> <%- gettext("Yes") %></label>
+                    <label><input type="radio" class="radio-no" name="cohort-association-course" value="no"  <%- !hasSelectedContentGroup ? 'checked="checked"' : '' %>/> <%- gettext("No") %></label>
+                    <div class="input-group has-other-input-text">
+                        <label><input type="radio" class="radio-yes" name="cohort-association-course" value="yes" <%- hasSelectedContentGroup ? 'checked="checked"' : '' %> /> <%- gettext("Yes") %></label>
                         <% if (contentGroups.length > 0) { %>
                             <div class="input-group-other">
                                 <label class="sr" for="cohort-group-association"><%- gettext("Choose a content group to associate") %></label>
-                                <select name="cohort-group-association" id="cohort-group-association" class="input input-lg has-option-unavailable input-cohort-group-association <%- !cohortGroupId ? 'is-disabled' : '' %>">
-                                    <% if (!hasSelectedCohort) { %>
-                                        <option><%- gettext("Choose a content group to associate") %></option>
-                                    <% } %>
+                                <select name="cohort-group-association" class="input input-lg has-option-unavailable input-cohort-group-association">
+                                    <option value="None"><%- gettext("Choose a content group to associate") %></option>
 
                                     <%
-                                    for (var i=0; i < contentGroups.length; i++) {
-                                        var contentGroup = contentGroups[i];
+                                    var orderedContentGroups = _.sortBy(
+                                        contentGroups,
+                                        function(group) { return group.get('name'); }
+                                    );
+                                    for (var i=0; i < orderedContentGroups.length; i++) {
+                                        var contentGroup = orderedContentGroups[i];
                                         var contentGroupId = contentGroup.get('id');
-                                        var isSelected = contentGroupId == cohortGroupId;
+                                        var isSelected = contentGroupId == selectedContentGroupId;
                                         if (isSelected) {
                                             foundSelected = true;
                                         }
@@ -59,12 +61,12 @@
                                     }
                                     %>
 
-                                    <% if (hasSelectedCohort && !foundSelected) { %>
+                                    <% if (hasSelectedContentGroup && !foundSelected) { %>
                                         <option value="<%- contentGroupId %>" class="option-unavailable" selected="selected"><%- gettext("Some content group that's been deleted") %></option>
                                     <% } %>
                                 </select>
 
-                                <% if (hasSelectedCohort && !foundSelected) { %>
+                                <% if (hasSelectedContentGroup && !foundSelected) { %>
                                     <div class="msg-inline">
                                         <p class="copy-error"><i class="icon icon-warning-sign"></i><%- gettext("The selected content group has been deleted, you may wish to reassign this cohort group.") %></p>
                                     </div>
