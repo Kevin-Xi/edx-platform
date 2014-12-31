@@ -808,13 +808,13 @@ def _show_receipt_html(request, order):
     cobrand_logo_path = microsite.get_value("PDF_RECEIPT_COBRAND_LOGO_PATH", settings.PDF_RECEIPT_COBRAND_LOGO_PATH)
 	    
     context = {
-            'cobrand_logo_path': cobrand_logo_path,
-            'logo_path': logo_path,
-            'disclaimer_text': disclaimer_text,
-            'billing_address_text': billing_address_text,
-            'tax_id': tax_id,
-            'tax_label': tax_label,
-            'terms_and_conditions': terms_conditions_text,
+        'cobrand_logo_path': cobrand_logo_path,
+        'logo_path': logo_path,
+        'disclaimer_text': disclaimer_text,
+        'billing_address_text': billing_address_text,
+        'tax_id': tax_id,
+        'tax_label': tax_label,
+        'terms_and_conditions': terms_conditions_text,
 	    'footer_text': footer_text,
     }
 

@@ -112,21 +112,37 @@ class SimpleInvoice(UnicodeProperty):
                       self.page_width - (self.MARGIN * 2), self.page_height - (self.MARGIN * 2),
                       stroke=True, fill=False)
 
+    def load_image(self, img_path):
+        import os
+        if img_path.startswith("/static/images"):
+            folders_list_in_path = __file__.split(os.sep)[:-4]
+            folders_list_in_path.append(img_path)
+            abs_path = os.sep.join(folders_list_in_path)
+        else:
+            abs_path = img_path
+
+        if os.path.isfile(abs_path):
+            #check by giving a non image file.
+            return Image.open(abs_path)
+        else:
+            return None
+
+
     def draw_logos(self):
         img_height = 12 * mm
         horizontal_padding_from_border = 9 * mm
         vertical_padding_from_border = 11 * mm
         img_y_pos = self.page_height - (self.MARGIN + vertical_padding_from_border + img_height)
 
-        if self.cobrand_logo_path:
-            img = Image.open(self.cobrand_logo_path)
-            img_width = float(img.size[0]) / (float(img.size[1])/img_height)
-            self.pdf.drawImage(self.cobrand_logo_path, self.MARGIN + horizontal_padding_from_border, img_y_pos, img_width, img_height, mask='auto')
+        cobrand_img = self.load_image(self.cobrand_logo_path)
+        if cobrand_img:
+            img_width = float(cobrand_img.size[0]) / (float(cobrand_img.size[1])/img_height)
+            self.pdf.drawImage(cobrand_img.filename, self.MARGIN + horizontal_padding_from_border, img_y_pos, img_width, img_height, mask='auto')
 
-        if self.logo_path:
-            img = Image.open(self.logo_path)
-            img_width = float(img.size[0]) / (float(img.size[1])/img_height)
-            self.pdf.drawImage(self.logo_path, self.page_width - (self.MARGIN + horizontal_padding_from_border + img_width), img_y_pos, img_width, img_height, mask='auto')
+        logo_img = self.load_image(self.logo_path)
+        if logo_img:
+            img_width = float(logo_img.size[0]) / (float(logo_img.size[1])/img_height)
+            self.pdf.drawImage(logo_img.filename, self.page_width - (self.MARGIN + horizontal_padding_from_border + img_width), img_y_pos, img_width, img_height, mask='auto')
 
         return img_y_pos - self.min_clearance
 
