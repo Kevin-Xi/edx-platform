@@ -57,8 +57,8 @@ class SimpleInvoice(UnicodeProperty):
         self.date = context['date']
         self.is_invoice = context['is_invoice']
         self.total_cost = context['total_cost']
-        self.wl_logo = context['wl_logo']
-        self.edx_logo = context['edx_logo']
+        self.logo_path = context['logo_path']
+        self.cobrand_logo_path = context['cobrand_logo_path']
         self.payment_received = context['payment_received'] if 'payment_received' in context else ''
         self.balance = context['balance'] if 'balance' in context else ''
         self.currency = settings.PAID_COURSE_REGISTRATION_CURRENCY[1]
@@ -124,13 +124,15 @@ class SimpleInvoice(UnicodeProperty):
         vertical_padding_from_border = 11 * mm
         img_y_pos = self.page_height - (self.MARGIN + vertical_padding_from_border + img_height)
 
-        img = Image.open(self.wl_logo)
-        img_width = float(img.size[0]) / (float(img.size[1])/img_height)
-        self.pdf.drawImage(self.wl_logo, self.MARGIN + horizontal_padding_from_border, img_y_pos, img_width, img_height, mask='auto')
+	if self.cobrand_logo_path:
+	    img = Image.open(self.cobrand_logo_path)
+            img_width = float(img.size[0]) / (float(img.size[1])/img_height)
+            self.pdf.drawImage(self.cobrand_logo_path, self.MARGIN + horizontal_padding_from_border, img_y_pos, img_width, img_height, mask='auto')
 
-        img = Image.open(self.edx_logo)
-        img_width = float(img.size[0]) / (float(img.size[1])/img_height)
-        self.pdf.drawImage(self.edx_logo, self.page_width - (self.MARGIN + horizontal_padding_from_border + img_width), img_y_pos, img_width, img_height, mask='auto')
+	if self.logo_path:
+            img = Image.open(self.logo_path)
+            img_width = float(img.size[0]) / (float(img.size[1])/img_height)
+            self.pdf.drawImage(self.logo_path, self.page_width - (self.MARGIN + horizontal_padding_from_border + img_width), img_y_pos, img_width, img_height, mask='auto')
 
         return img_y_pos - self.min_clearance
 

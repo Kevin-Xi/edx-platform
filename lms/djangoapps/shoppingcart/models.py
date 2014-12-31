@@ -478,13 +478,12 @@ class Order(models.Model):
         tax_id = microsite.get_value("PDF_RECEIPT_TAX_ID", settings.PDF_RECEIPT_TAX_ID)
         tax_label = microsite.get_value("PDF_RECEIPT_TAX_ID_LABEL", settings.PDF_RECEIPT_TAX_ID_LABEL)
         terms_conditions_text = microsite.get_value("PDF_RECEIPT_TERMS_AND_CONDITIONS", settings.PDF_RECEIPT_TERMS_AND_CONDITIONS)
-
-        wl_partner_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/wl_logo.gif'
-        edx_logo_path = '/edx/app/edxapp/edx-platform/lms/static/images/logo-edX-77x36.png'
+        logo_path = microsite.get_value("PDF_RECEIPT_LOGO_PATH", settings.PDF_RECEIPT_LOGO_PATH)
+        cobrand_logo_path = microsite.get_value("PDF_RECEIPT_COBRAND_LOGO_PATH", settings.PDF_RECEIPT_COBRAND_LOGO_PATH)
 
         context = {
-            'wl_logo': wl_partner_logo_path,
-            'edx_logo': edx_logo_path,
+            'cobrand_logo_path': cobrand_logo_path,
+            'logo_path': logo_path,
             'disclaimer_text': disclaimer_text,
             'billing_address_text': billing_address_text,
             'tax_id': tax_id,
